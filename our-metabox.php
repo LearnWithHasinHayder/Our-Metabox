@@ -16,7 +16,16 @@ class OurMetabox {
 		add_action( 'plugins_loaded', array( $this, 'omb_load_textdomain' ) );
 		add_action( 'admin_menu', array( $this, 'omb_add_metabox' ) );
 		add_action( 'save_post', array( $this, 'omb_save_metabox' ) );
+
+		add_action('admin_enqueue_scripts',array($this,'omb_admin_assets'));
 	}
+
+	function omb_admin_assets(){
+		wp_enqueue_style('omb-admin-style',plugin_dir_url(__FILE__)."assets/admin/css/style.css",null,time());
+		wp_enqueue_style('jquery-ui-css','//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css',null,time());
+		wp_enqueue_script('omb-admin-js',plugin_dir_url(__FILE__)."assets/admin/js/main.js",array('jquery','jquery-ui-datepicker'),time(),true);
+	}
+
 
 	private function is_secured( $nonce_field, $action, $post_id ) {
 		$nonce = isset( $_POST[ $nonce_field ] ) ? $_POST[ $nonce_field ] : '';
@@ -77,7 +86,59 @@ class OurMetabox {
 			array( $this, 'omb_display_metabox' ),
 			array( 'post', 'page' )
 		);
+
+		add_meta_box(
+			'omb_book_info',
+			__( 'Book Info', 'our-metabox' ),
+			array( $this, 'omb_book_info' ),
+			array( 'book' )
+		);
+
 	}
+
+	function omb_book_info(){
+		wp_nonce_field('omb_book','omb_book_nonce');
+
+		$metabox_html = <<<EOD
+<div class="fields">
+	<div class="field_c">
+		<div class="label_c">
+			<label for="book_author">Book Author</label>
+		</div>
+		<div class="input_c">
+			<input type="text" class="widefat" id="book_author">
+		</div>
+		<div class="float_c"></div>
+	</div>
+	
+	<div class="field_c">
+		<div class="label_c">
+			<label for="book_isbn">Book ISBN</label>
+		</div>
+		<div class="input_c">
+			<input type="text" id="book_isbn">
+		</div>
+		<div class="float_c"></div>
+	</div>
+	
+	<div class="field_c">
+		<div class="label_c">
+			<label for="book_year">Publish Year</label>
+		</div>
+		<div class="input_c">
+			<input type="text" class="omb_dp" id="book_year">
+		</div>
+		<div class="float_c"></div>
+	</div>
+	
+</div>
+EOD;
+
+		echo $metabox_html;
+
+	}
+
+
 
 	function omb_display_metabox( $post ) {
 		$location    = get_post_meta( $post->ID, 'omb_location', true );
