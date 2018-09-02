@@ -17,13 +17,16 @@ class OurMetabox {
 		add_action( 'admin_menu', array( $this, 'omb_add_metabox' ) );
 		add_action( 'save_post', array( $this, 'omb_save_metabox' ) );
 
-		add_action('admin_enqueue_scripts',array($this,'omb_admin_assets'));
+		add_action( 'admin_enqueue_scripts', array( $this, 'omb_admin_assets' ) );
 	}
 
-	function omb_admin_assets(){
-		wp_enqueue_style('omb-admin-style',plugin_dir_url(__FILE__)."assets/admin/css/style.css",null,time());
-		wp_enqueue_style('jquery-ui-css','//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css',null,time());
-		wp_enqueue_script('omb-admin-js',plugin_dir_url(__FILE__)."assets/admin/js/main.js",array('jquery','jquery-ui-datepicker'),time(),true);
+	function omb_admin_assets() {
+		wp_enqueue_style( 'omb-admin-style', plugin_dir_url( __FILE__ ) . "assets/admin/css/style.css", null, time() );
+		wp_enqueue_style( 'jquery-ui-css', '//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css', null, time() );
+		wp_enqueue_script( 'omb-admin-js', plugin_dir_url( __FILE__ ) . "assets/admin/js/main.js", array(
+			'jquery',
+			'jquery-ui-datepicker'
+		), time(), true );
 	}
 
 
@@ -64,10 +67,11 @@ class OurMetabox {
 		$is_favorite = isset( $_POST['omb_is_favorite'] ) ? $_POST['omb_is_favorite'] : 0;
 		$colors      = isset( $_POST['omb_clr'] ) ? $_POST['omb_clr'] : array();
 		$colors2     = isset( $_POST['omb_color'] ) ? $_POST['omb_color'] : '';
+		$fav_color    = isset( $_POST['omb_fav_color'] ) ? $_POST['omb_fav_color'] : '';
 
-		if ( $location == '' || $country == '' ) {
+		/*if ( $location == '' || $country == '' ) {
 			return $post_id;
-		}
+		}*/
 
 		$location = sanitize_text_field( $location );
 		$country  = sanitize_text_field( $country );
@@ -77,6 +81,7 @@ class OurMetabox {
 		update_post_meta( $post_id, 'omb_is_favorite', $is_favorite );
 		update_post_meta( $post_id, 'omb_clr', $colors );
 		update_post_meta( $post_id, 'omb_color', $colors2 );
+		update_post_meta( $post_id, 'omb_fav_color', $fav_color );
 	}
 
 	function omb_add_metabox() {
@@ -96,8 +101,8 @@ class OurMetabox {
 
 	}
 
-	function omb_book_info(){
-		wp_nonce_field('omb_book','omb_book_nonce');
+	function omb_book_info() {
+		wp_nonce_field( 'omb_book', 'omb_book_nonce' );
 
 		$metabox_html = <<<EOD
 <div class="fields">
@@ -139,7 +144,6 @@ EOD;
 	}
 
 
-
 	function omb_display_metabox( $post ) {
 		$location    = get_post_meta( $post->ID, 'omb_location', true );
 		$country     = get_post_meta( $post->ID, 'omb_country', true );
@@ -159,6 +163,8 @@ EOD;
 		$colors = array( 'red', 'green', 'blue', 'yellow', 'magenta', 'pink', 'black' );
 
 		wp_nonce_field( 'omb_location', 'omb_location_field' );
+
+
 		$metabox_html = <<<EOD
 <p>
 <label for="omb_location">{$label1}: </label>
@@ -177,6 +183,7 @@ EOD;
 
 EOD;
 
+		$saved_colors = is_array( $saved_colors ) ? $saved_colors : array();
 		foreach ( $colors as $color ) {
 			$_color       = ucwords( $color );
 			$checked      = in_array( $color, $saved_colors ) ? 'checked' : '';
@@ -203,6 +210,30 @@ EOD;
 		}
 
 		$metabox_html .= "</p>";
+
+
+		$fav_color = get_post_meta($post->ID,'omb_fav_color',true);
+
+
+		$dropdown_html = "<option value='0'>".__('Select a color','our-metabox')."</option>";
+		foreach($colors as $color){
+			$selected ='';
+			if($color == $fav_color){
+				$selected = 'selected';
+			}
+			$dropdown_html .= sprintf("<option %s value='%s'>%s</option>",$selected, $color, ucwords($color));
+		}
+
+		$metabox_html .= <<<EOD
+<p>
+<label for="omb_fav_color">{$label4}: </label>
+<select name="omb_fav_color" id="omb_fav_color">
+{$dropdown_html}
+</select>
+</p>
+EOD;
+
+
 		echo $metabox_html;
 	}
 
