@@ -17,6 +17,7 @@ class OurMetabox {
 		add_action( 'admin_menu', array( $this, 'omb_add_metabox' ) );
 		add_action( 'save_post', array( $this, 'omb_save_metabox' ) );
 		add_action( 'save_post', array( $this, 'omb_save_image' ) );
+		add_action( 'save_post', array( $this, 'omb_save_gallery' ) );
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'omb_admin_assets' ) );
 	}
@@ -70,6 +71,19 @@ class OurMetabox {
 
 	}
 
+	function omb_save_gallery($post_id){
+		if ( ! $this->is_secured( 'omb_gallery_nonce', 'omb_gallery', $post_id ) ) {
+			return $post_id;
+		}
+
+		$image_id    = isset( $_POST['omb_images_id'] ) ? $_POST['omb_images_id'] : '';
+		$image_url    = isset( $_POST['omb_images_url'] ) ? $_POST['omb_images_url'] : '';
+
+		update_post_meta($post_id,'omb_images_id',$image_id);
+		update_post_meta($post_id,'omb_images_url',$image_url);
+
+	}
+
 	function omb_save_metabox( $post_id ) {
 
 		if ( ! $this->is_secured( 'omb_location_field', 'omb_location', $post_id ) ) {
@@ -117,6 +131,13 @@ class OurMetabox {
 			'omb_image_info',
 			__( 'Image Info', 'our-metabox' ),
 			array( $this, 'omb_image_info' ),
+			array( 'post' )
+		);
+
+		add_meta_box(
+			'omb_gallery_info',
+			__( 'Gallery Info', 'our-metabox' ),
+			array( $this, 'omb_gallery_info' ),
 			array( 'post' )
 		);
 
@@ -169,6 +190,7 @@ EOD;
 		$image_url = esc_attr(get_post_meta($post->ID,'omb_image_url',true));
 		wp_nonce_field( 'omb_image', 'omb_image_nonce' );
 
+		$button_label = __('Upload Image','our-metabox');
 		$metabox_html = <<<EOD
 <div class="fields">
 	<div class="field_c">
@@ -176,10 +198,39 @@ EOD;
 			<label>Image</label>
 		</div>
 		<div class="input_c">
-			<button class="button" id="upload_image">Upload Image</button>
+			<button class="button" id="upload_image">{$button_label}</button>
 			<input type="hidden" name="omb_image_id" id="omb_image_id" value="{$image_id}"/>
 			<input type="hidden" name="omb_image_url" id="omb_image_url" value="{$image_url}"/>
 			<div style="width:100%;height:auto;" id="image-container"></div>
+		</div>
+		<div class="float_c"></div>
+	</div>
+	
+</div>
+EOD;
+
+		echo $metabox_html;
+
+	}
+
+	function omb_gallery_info($post) {
+		$image_id = esc_attr(get_post_meta($post->ID,'omb_images_id',true));
+		$image_url = esc_attr(get_post_meta($post->ID,'omb_images_url',true));
+		wp_nonce_field( 'omb_gallery', 'omb_gallery_nonce' );
+
+		$label = __('Gallery','our-metabox');
+		$button_label = __('Upload Images','our-metabox');
+		$metabox_html = <<<EOD
+<div class="fields">
+	<div class="field_c">
+		<div class="label_c">
+			<label>{$label}</label>
+		</div>
+		<div class="input_c">
+			<button class="button" id="upload_images">{$button_label}</button>
+			<input type="hidden" name="omb_images_id" id="omb_images_id" value="{$image_id}"/>
+			<input type="hidden" name="omb_images_url" id="omb_images_url" value="{$image_url}"/>
+			<div style="width:100%;height:auto;" id="images-container"></div>
 		</div>
 		<div class="float_c"></div>
 	</div>
