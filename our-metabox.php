@@ -20,7 +20,17 @@ class OurMetabox {
 		add_action( 'save_post', array( $this, 'omb_save_gallery' ) );
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'omb_admin_assets' ) );
+		add_filter('user_contactmethods',array($this,'omb_user_contact_methods'));
 	}
+
+	function omb_user_contact_methods($methods){
+		$methods['facebook'] = __('Facebook','our-metabox');
+		$methods['linkedin'] = __('Linked In','our-metabox');
+		$methods['twitter'] = __('Twitter','our-metabox');
+
+		return $methods;
+	}
+
 
 	function omb_admin_assets() {
 		wp_enqueue_style( 'omb-admin-style', plugin_dir_url( __FILE__ ) . "assets/admin/css/style.css", null, time() );
